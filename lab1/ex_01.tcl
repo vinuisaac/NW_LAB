@@ -1,75 +1,119 @@
-# Create a new instance of a Simulator named "ns"
-set ns [new Simulator]			;# "new" is used to allocate memory to "ns" instance.
+#Program 1
+set val(stop)   10.0 ;#time of simulation end
 
-# Open a new file to store Network Animator (NAM) data which is used for *Visualization*
-set namfile [open ex_01.nam w]		;# "namfile" is a file pointer for "ex_01.nam"
-$ns namtrace-all $namfile		;# "namtrace-all" is an instance procedure (i.e., built-in function) for NAM
+#Create a ns simulator
+set ns [new Simulator]
 
-# Open a new file to store trace data which is used for *Analysis*
-set tracefile [open ex_01.tr w]  	;# "tracefile" is a file pointer for "ex_01.tr"
-$ns trace-all $tracefile      		;# "trace-all" is an instance procedure (i.e., built-in function) for trace 
+$ns color 1 Blue
+$ns color 2 Red
 
-# Creating five instances of *node* inside the "ns" instance. Hence, the syntax is "$ns node" in brackets and not "new node"
-set n0 [$ns node]		 
+#Open the NS trace file
+set tracefile [open p1.tr w]
+$ns trace-all $tracefile
+
+#Open the NAM trace file
+set namfile [open p1.nam w]
+$ns namtrace-all $namfile
+
+#Create 5 nodes
+set n0 [$ns node]
 set n1 [$ns node]
 set n2 [$ns node]
 set n3 [$ns node]
 set n4 [$ns node]
 
-# Setting up links to design the given topology [Assumptions: Bandwidth: 1Mbps, Propagation delay: 10ms, Packet Discard Stragety: DropTail]
-$ns duplex-link $n0 $n4 1Mb 10ms DropTail 
-$ns duplex-link $n1 $n4 1Mb 10ms DropTail
-$ns duplex-link $n4 $n3 1Mb 10ms DropTail
-$ns duplex-link $n4 $n2 1Mb 10ms DropTail
+#Create labels for nodes
+$n0 label "Tcp Source"
+$n3 label "Tcp_Destination"
+$n1 label "Udp Source "
+$n2 label "Udp Destination"
 
-# Setting up TCP Source
-set tcp [new Agent/TCP]			;# Create a new instance called "tcp" of Agent/TCP class
-$ns attach-agent $n0 $tcp   		;# Configure n0 as the TCP Source
+#Give shapes to nodes
+$n0 shape square
+$n3 shape square
+$n4 shape circle
+$n1 shape hexagon
+$n2 shape hexagon
 
-# Setting up TCP Destination (also known as TCP Sink)
-set sink [new Agent/TCPSink] 		;# Create a new instance called "sink" of Agent/TCPSink class
-$ns attach-agent $n3 $sink    		;# Configure n3 as the TCP Destination
+#Give colors to nodes
+$n0 color green
+$n3 color red
+$n1 color green
+$n2 color red
+$n4 color black
 
-# Setup connection between TCP Source and Destination
-$ns connect $tcp $sink
+#Create links between nodes
+$ns duplex-link $n0 $n4 100.0Mb 40ms DropTail
+$ns queue-limit $n0 $n4 5 ; # default queue limit is 50
 
-# Enable FTP application on TCP Source
-set ftp [new Application/FTP]		;# Create a new instance called "ftp" of Application/FTP class
-$ftp attach-agent $tcp			;# Configure the application to use TCP
+$ns duplex-link $n4 $n3 100.0Mb 40ms DropTail
+$ns queue-limit $n4 $n3 5
 
-# Setting up UDP Source
-set udp [new Agent/UDP]			;# Create a new instance called "udp" of Agent/UDP class
-$ns attach-agent $n1 $udp		;# Configure n1 as the UDP Source
+$ns duplex-link $n1 $n4 100.0Mb 40ms DropTail
+$ns queue-limit $n1 $n4 5
 
-# Setting up a dummy UDP Destination (There are no ACKs in UDP!)
-set null [new Agent/Null]		;# Create a new instance called "null" of Agent/Null class
-$ns attach-agent $n2 $null		;# Configure n2 as the UDP Destination
+$ns duplex-link $n4 $n2 100.0Mb 40ms DropTail
+$ns queue-limit $n4 $n2 5
 
-# Setup connection between UDP Source and Destination
-$ns connect $udp $null
+$ns duplex-link-op $n4 $n2 queuePos 0.5 ; # give reading when queue content is 50% 
+$ns duplex-link-op $n4 $n0 queuePos 0.5
 
-# Enable CBR application on UDP Source and set its parameters
-set cbr [new Application/Traffic/CBR]	;# Create a new instance called "cbr" of Application/Traffic/CBR class
-$cbr set packetSize_ 500		;# packet size is set to 500 bytes
-$cbr set interval_ 0.005		;# packet will be sent at an interval of 0.005 seconds
-$cbr attach-agent $udp			;# Configure the application to use UDP
+#Give node position (for NAM)
+$ns duplex-link-op $n4 $n0 orient left-down
+$ns duplex-link-op $n1 $n4 orient left-up
+$ns duplex-link-op $n3 $n4 orient left-down
+$ns duplex-link-op $n2 $n4 orient right-down
 
-# Schedule traffic in the network by starting and stopping the created applications
-# Note that you can schedule them in any order. A sample order of starting and stopping is given below:
-$ns at 0.0 "$cbr start"			;# CBR application started
-$ns at 0.0 "$ftp start"			;# FTP application started
-$ns at 9.0 "$cbr stop"			;# CBR application stopped
-$ns at 9.0 "$ftp stop"			;# FTP application stopped
+#Setup a TCP connection
+set tcp0 [new Agent/TCP]
+$ns attach-agent $n0 $tcp0
+set sink3 [new Agent/TCPSink]
+$ns attach-agent $n3 $sink3
+$ns connect $tcp0 $sink3
+$tcp0 set packetSize_ 1000
 
-# User defined procedure to terminate the simulation
-proc finish {} {      			;# "finish" is a user defined name of the procedure.
-global ns namfile tracefile  		;# these parameters are made global so that they can be used inside "finish" procedure
-$ns flush-trace				;# "flush-trace" is a built-in procedure to de-allocate the memory.
-close $namfile				;# Closes ex_01.nam
-close $tracefile			;# Closes ex_01.tr
-exec nam ex_01.nam &			;# Creates a new process in background to execute "nam ex_01.nam"
-exit 0
+#Setup a UDP connection
+set udp1 [new Agent/UDP]
+$ns attach-agent $n1 $udp1
+set null2 [new Agent/Null]
+$ns attach-agent $n2 $null2
+$ns connect $udp1 $null2
+$udp1 set packetSize_ 1000
+
+#Assign flow-id
+$tcp0 set fid_ 1
+$udp1 set fid_ 2
+
+#Setup a CBR Application over TCP connection
+set cbr0 [new Application/Traffic/CBR]
+$cbr0 attach-agent $tcp0
+$cbr0 set packetSize_ 1000
+$cbr0 set rate_  3.0Mb
+$cbr0 set random_ null
+$ns at 0.01 "$cbr0 start"
+$ns at 9.9  "$cbr0 stop"
+
+#Setup a CBR Application over UDP connection
+set cbr1 [new Application/Traffic/CBR]
+$cbr1 attach-agent $udp1
+$cbr1 set packetSize_ 1000
+$cbr1 set rate_ 2.0Mb
+$cbr1 set random_ null
+$ns at 0.1 "$cbr1 start"
+$ns at 9.0 "$cbr1 stop"
+
+#Define a 'finish' procedure
+proc finish {} {
+    global ns tracefile namfile
+    $ns flush-trace
+    close $tracefile
+    close $namfile
+    exec nam p1.nam &
+    exit 0
 }
 
-$ns at 10.0 "finish"			;# Simulation stops at time 10
-$ns run					;# "run" is an instance procedure to execute the events.
+$ns at $val(stop) "$ns nam-end-wireless $val(stop)"
+$ns at $val(stop) "finish"
+$ns at $val(stop) "puts \"done\" ; $ns halt"
+$ns run
+
