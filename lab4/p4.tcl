@@ -1,4 +1,4 @@
-#Program 1
+#Program 4
 set val(stop)   20.0 ;#time of simulation end
 
 #Create a ns simulator
