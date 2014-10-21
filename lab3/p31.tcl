@@ -1,13 +1,9 @@
 set ns [new Simulator]
 
-$ns color 1 Blue
-$ns color 2 Red
-
-
-set tracefile [open p3.tr w]
+set tracefile [open p31.tr w]
 $ns trace-all $tracefile
 
-set namfile [open p3.nam w]
+set namfile [open p31.nam w]
 $ns namtrace-all $namfile
 
 
@@ -17,7 +13,7 @@ proc finish {} {
 		$ns flush-trace
 		close $tracefile
 		close $namfile
-		exec nam p3.nam &
+		exec nam p31.nam &
 		exit 0
 	}
 
@@ -28,14 +24,14 @@ proc finish {} {
 	set n4 [$ns node]
 	set n5 [$ns node]
 	set n6 [$ns node]
-	set n7 [$ns node] ;#for additional task
+	set n7 [$ns node] ;# for additional task
 	
 $ns duplex-link $n7 $n0 1Mb 40ms DropTail ;# establish a physical connection between the new node and n0
 	
 set lan [$ns newLan "$n0 $n1 $n2 $n3 $n4 $n5 $n6" 0.5Mb 40ms LL Queue/DropTail MAC/802_3 Channel]
 
 set udp [new Agent/UDP]
-$ns attach-agent $n7 $udp ;# change the udp source to the new node n7 thats it with new additions
+$ns attach-agent $n7 $udp ;# change the udp source to the new node n7
 
 #this is not the end of the additional task, we are also required to check how the hop gets affected due to the addition.
 #i dont know how to do that
