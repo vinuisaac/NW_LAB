@@ -49,7 +49,6 @@ $cbr1 set random_ null
 $ns at 0.1 "$cbr1 start"
 $ns at 9.0 "$cbr1 stop"
 
-#Define a 'finish' procedure
 proc finish {} {
     global ns tracefile namfile
     $ns flush-trace
