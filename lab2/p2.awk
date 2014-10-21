@@ -1,4 +1,3 @@
-# AWK script to calulate the time required to transfer the 10 MB file from the server to client
 BEGIN {
 	count=0;
 	time=0;
